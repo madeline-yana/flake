@@ -6,6 +6,10 @@
 second-generation ryzen (zen+) with no TPM and a Samsung EVO SSD with flawed
 hardware encryption. you may need to edit these files to add more things for
 what your hardware supports. always feel free to upstream your changes!
+- while the Samsung EVO's hardware encryption has known flaws, this principle
+applies broadly; hardware-based encryptionshould never be the sole protection
+layer. LUKS2 provides software-level encryption independent of hardware
+capabilities, and is the actual security foundation of this setup.
 - the `gaming` specialization is specifically configured to run overwatch. im
 not kidding. with this nixos install, overwatch becomes my biggest security
 threat.
@@ -43,7 +47,6 @@ this using a variety of tools that are meant to make breaking the boot process
 as close to impossible as feasible.
 
 ### stage 0 paranoia: standard mitigations
-
 as far as standard mitigations go, `lanzaboote` is used for secure boot setup,
 `sbctl` keys are properly enrolled if you follow [INSTALL.md](./INSTALL.md), 
 and LUKS2 encrypts your drive, requiring various verification methods in order
@@ -488,9 +491,11 @@ each user has a soft limit of 1024 processes and a hard limit of 8192 processes
 
 #### runtime kernel module loading is disabled
 
-this prevents even any root-privileged user from adding any module to the
-kernel after the boot has completed. this prevents any plethora of attacks on
-otherwise vulnerable machines or machines with compromised credentials.
+this prevents even any root-privileged user from adding any module to the kernel
+after the boot has completed. this is complemented by `module.sig_enforce` which 
+blocks all unsigned modules. `auditd` monitors `/sys/module/*/holders` to detect 
+unintended module unloads, which could indicate an attempt to bypass this protection 
+or hide malicious kernel behavior.
 
 #### grapheneos' `hardened_malloc` replaces glibc's `malloc`
 
